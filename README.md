@@ -20,10 +20,10 @@ Your feedback is valuable in improving the stability and security of this beta v
 
 # Installation
 
-Currently npm package doesn't work properly, so run it from sources
+Currently, npm package doesn't work properly, so run it from sources
 
 ```bash
-git clone https://github.com/nonam3e/tonnel-cli && cd tonnel-cli && yarn install
+git clone https://github.com/Skydev0h/tonnel-cli && cd tonnel-cli && yarn install
 ```
 
 ## Usage
@@ -31,3 +31,16 @@ git clone https://github.com/nonam3e/tonnel-cli && cd tonnel-cli && yarn install
 ```bash
 yarn dev
 ```
+
+## Automated processing
+
+If you need to withdraw lots of keys, or tree build keeps failing on some lite server errors, you can use automated processing mode.
+
+To use it, create `auto.txt` file in `key` directory (then, `Withdraw -> Direct withdraw` will be automatically selected).
+
+Afterward, put your withdrawal recipient into `key/address.txt` file.
+
+Finally, **COPY** your `PrivateKey*.txt` or `privatekeydocument*.txt` into `key` directory.
+
+It is important to **COPY** files because after processing they will be deleted, so that you can re-run the `yarn dev` again to process the next key.
+
