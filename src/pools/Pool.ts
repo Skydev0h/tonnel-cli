@@ -29,6 +29,7 @@ import { JettonWallet } from "../contracts/JettonWallet";
 import { PoolConfig, PoolConfigNative, PoolConfigJetton } from "./config";
 import { FSStorage } from "../storage/FSStorage";
 import path from "path";
+import {createTonClient} from "../network/createNetworkProvider";
 
 export interface DepositProof {
   commitment: bigint;
@@ -71,6 +72,8 @@ export abstract class Pool {
   }
   async buildTree(): Promise<MerkleTree> {
     let { to_lt, leafs } = await this.getCache();
+
+    process.stdout.write(chalk.gray(`Get all transactions upto ${to_lt} lt...\n`));
     let transactions = await this.getAllTransactions(to_lt);
     if (transactions.length > 0) {
       to_lt = transactions[0].lt.toString();
@@ -88,7 +91,7 @@ export abstract class Pool {
   abstract filterLeafs(transactions: Transaction[]): string[];
   abstract isEnoughTokens(via: Sender): Promise<boolean>;
   async buildTreeWrapped() {
-    process.stdout.write(chalk.green("Building a tree ... "));
+    process.stdout.write(chalk.green("Building a tree ...\n"));
     let time = Date.now();
     const tree = await this.buildTree();
     console.log(
@@ -190,6 +193,7 @@ export abstract class Pool {
   }
   async getAllTransactions(to_lt?: string) {
     const limit = 100;
+    process.stdout.write(chalk.gray(`Get upto ${limit} transactions upto ${to_lt} lt...\n`));
     let transactions: Transaction[] = await this.provider.getTransactions(
       this.tonnel.address,
       { limit, to_lt, inclusive: false },
@@ -206,15 +210,24 @@ export abstract class Pool {
         .endCell()
         .hash();
       prev_length = transactions.length;
-      transactions = transactions.concat(
-        await this.provider.getTransactions(this.tonnel.address, {
-          lt: last.toString(),
-          hash: hash.toString("base64"),
-          limit,
-          to_lt,
-          inclusive: false,
-        }),
-      );
+      process.stdout.write(chalk.gray(`Get upto ${limit} transactions upto ${last.toString()} lt...\n`));
+      while (true) {
+        try {
+          transactions = transactions.concat(
+              await this.provider.getTransactions(this.tonnel.address, {
+                lt: last.toString(),
+                hash: hash.toString("base64"),
+                limit,
+                to_lt,
+                inclusive: false,
+              }),
+          );
+          break;
+        } catch (e: any) {
+          process.stdout.write(chalk.yellow('Failed: ' + e.toString() + "\n"));
+          this.provider = await createTonClient();
+        }
+      }
     } while (
       last != transactions[transactions.length - 1].lt &&
       transactions.length - prev_length == limit

@@ -293,9 +293,7 @@ class NetworkProviderBuilder {
     let network = await this.chooseNetwork();
     const explorer = this.chooseExplorer();
 
-    let tc = new TonClient({
-      endpoint: await getHttpEndpoint({ network }),
-    });
+    let tc = await createTonClient(network);
 
     const sendProvider = await this.chooseSendProvider(network);
 
@@ -330,6 +328,6 @@ export async function createNetworkProvider(
 
 export async function createTonClient(network: Network = "mainnet") {
   return new TonClient({
-    endpoint: await getHttpEndpoint({ network }),
+    endpoint: await getHttpEndpoint({ network })
   });
 }
